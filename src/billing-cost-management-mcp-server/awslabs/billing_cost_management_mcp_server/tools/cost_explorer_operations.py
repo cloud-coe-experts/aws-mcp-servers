@@ -24,6 +24,7 @@ from ..utilities.aws_service_base import (
     handle_aws_error,
     paginate_aws_response,
     parse_json,
+    parse_metrics
 )
 from ..utilities.sql_utils import convert_api_response_to_table
 from datetime import datetime, timedelta
@@ -70,7 +71,7 @@ async def get_cost_and_usage(
         await ctx.info(f'Using date range: {start} to {end}')
 
         # Parse JSON inputs
-        metrics_list = parse_json(metrics, 'metrics')
+        metrics_list = parse_metrics(metrics)
         group_by_list = parse_json(group_by, 'group_by')
         filters = parse_json(filter_expr, 'filter')
 
@@ -182,7 +183,7 @@ async def get_cost_and_usage_with_resources(
         await ctx.info(f'Using date range: {start} to {end}')
 
         # Parse JSON inputs
-        metrics_list = parse_json(metrics, 'metrics')
+        metrics_list = parse_metrics(metrics)
         group_by_list = parse_json(group_by, 'group_by')
         filters = parse_json(filter_expr, 'filter')
 

@@ -136,6 +136,26 @@ def create_aws_client(service_name: str, region_name: Optional[str] = None) -> A
 
     return session.client(service_name, config=config)
 
+def parse_metrics(metrics: Optional[str]) -> Any:
+    """
+    Ensure the metrics parameter is always a Python list of strings
+    suitable for AWS Cost Explorer get_cost_and_usage API.
+
+    Args:
+        metrics: Can be None, a plain string ("UnblendedCost"), 
+                 or a JSON-encoded list ("[\"UnblendedCost\"]").
+
+    Returns:
+        List of metric strings.
+    """
+    if not metrics:
+        return ["UnblendedCost"]  # default metric
+
+    try:
+        return json.loads(metrics)
+    except json.JSONDecodeError:
+        # Plain string, wrap in list
+        return [metrics]
 
 def parse_json(json_str: Optional[str], parameter_name: str) -> Any:
     """Parse a JSON string into a Python object.
