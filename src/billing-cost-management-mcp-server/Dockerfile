@@ -82,6 +82,11 @@ COPY ./docker-healthcheck.sh /usr/local/bin/docker-healthcheck.sh
 
 # Run as non-root
 USER app
+EXPOSE 8080
+
+# 2. Set the Environment Variable to force SSE mode
+ENV MCP_TRANSPORT="http"
+ENV AWS_REGION="us-west-2"
 
 # When running the container, add --db-path and a bind mount to the host's db file
 HEALTHCHECK --interval=60s --timeout=10s --start-period=10s --retries=3 CMD ["docker-healthcheck.sh"]

@@ -23,13 +23,15 @@ import os
 import sys
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(os.path.dirname(current_dir))
     if parent_dir not in sys.path:
         sys.path.insert(0, parent_dir)
 
-from awslabs.billing_cost_management_mcp_server.tools.aws_pricing_tools import aws_pricing_server
+from awslabs.billing_cost_management_mcp_server.tools.aws_pricing_tools import (
+    aws_pricing_server,
+)
 from awslabs.billing_cost_management_mcp_server.tools.bcm_pricing_calculator_tools import (
     bcm_pricing_calculator_server,
 )
@@ -37,7 +39,9 @@ from awslabs.billing_cost_management_mcp_server.tools.budget_tools import budget
 from awslabs.billing_cost_management_mcp_server.tools.compute_optimizer_tools import (
     compute_optimizer_server,
 )
-from awslabs.billing_cost_management_mcp_server.tools.cost_anomaly_tools import cost_anomaly_server
+from awslabs.billing_cost_management_mcp_server.tools.cost_anomaly_tools import (
+    cost_anomaly_server,
+)
 from awslabs.billing_cost_management_mcp_server.tools.cost_comparison_tools import (
     cost_comparison_server,
 )
@@ -59,9 +63,15 @@ from awslabs.billing_cost_management_mcp_server.tools.ri_performance_tools impor
 from awslabs.billing_cost_management_mcp_server.tools.sp_performance_tools import (
     sp_performance_server,
 )
-from awslabs.billing_cost_management_mcp_server.tools.storage_lens_tools import storage_lens_server
-from awslabs.billing_cost_management_mcp_server.tools.unified_sql_tools import unified_sql_server
-from awslabs.billing_cost_management_mcp_server.utilities.logging_utils import get_logger
+from awslabs.billing_cost_management_mcp_server.tools.storage_lens_tools import (
+    storage_lens_server,
+)
+from awslabs.billing_cost_management_mcp_server.tools.unified_sql_tools import (
+    unified_sql_server,
+)
+from awslabs.billing_cost_management_mcp_server.utilities.logging_utils import (
+    get_logger,
+)
 from fastmcp import FastMCP
 
 
@@ -71,7 +81,7 @@ logger = get_logger(__name__)
 
 # Main MCP server instance
 mcp = FastMCP(
-    name='billing-cost-management-mcp',
+    name="billing-cost-management-mcp",
     instructions="""AWS Billing and Cost Management MCP Server - Provides AWS cost optimization tools and prompts through MCP.
 
 When using these tools, always:
@@ -126,12 +136,14 @@ For multi-account environments:
 async def register_prompts():
     """Register all prompts with the MCP server."""
     try:
-        from awslabs.billing_cost_management_mcp_server.prompts import register_all_prompts
+        from awslabs.billing_cost_management_mcp_server.prompts import (
+            register_all_prompts,
+        )
 
         register_all_prompts(mcp)
-        logger.info('Registered all prompts')
+        logger.info("Registered all prompts")
     except Exception as e:
-        logger.error(f'Error registering prompts: {e}')
+        logger.error(f"Error registering prompts: {e}")
 
 
 async def setup():
@@ -153,32 +165,32 @@ async def setup():
 
     await register_prompts()
 
-    logger.info('AWS Billing and Cost Management MCP Server initialized successfully')
+    logger.info("AWS Billing and Cost Management MCP Server initialized successfully")
 
-    logger.info('Available tools:')
+    logger.info("Available tools:")
     tools = [
-        'cost-explorer',
-        'compute-optimizer',
-        'cost-optimization',
-        'storage-lens',
-        'pricing',
-        'bcm-pricing-calc',
-        'budget',
-        'cost-anomaly',
-        'cost-comparison',
-        'free-tier-usage',
-        'rec-details',
-        'ri-performance',
-        'sp-performance',
-        'session-sql',
+        "cost-explorer",
+        "compute-optimizer",
+        "cost-optimization",
+        "storage-lens",
+        "pricing",
+        "bcm-pricing-calc",
+        "budget",
+        "cost-anomaly",
+        "cost-comparison",
+        "free-tier-usage",
+        "rec-details",
+        "ri-performance",
+        "sp-performance",
+        "session-sql",
     ]
     for tool in tools:
-        logger.info(f'- {tool}')
+        logger.info(f"- {tool}")
 
-    logger.info('Available prompts:')
-    prompts = ['savings_plans_analysis', 'graviton_analysis']
+    logger.info("Available prompts:")
+    prompts = ["savings_plans_analysis", "graviton_analysis"]
     for prompt in prompts:
-        logger.info(f'- {prompt}')
+        logger.info(f"- {prompt}")
 
 
 def main():
@@ -186,9 +198,20 @@ def main():
     # Run the setup function to initialize the server
     asyncio.run(setup())
 
-    # Start the MCP server
-    mcp.run()
+    # Check environment variable to decide transport mode
+    transport_mode = os.getenv("MCP_TRANSPORT", "stdio")
+
+    if transport_mode == "sse":
+        logger.info("Starting in SSE (HTTP) mode on 0.0.0.0:8080")
+        # FastMCP supports SSE natively. We bind to 0.0.0.0 for Docker/K8s
+        mcp.run(transport="sse", host="0.0.0.0", port=8080)
+    elif transport_mode == "http":
+        logger.info("Starting in HTTP mode on 0.0.0.0:8080")
+        mcp.run(transport="http", host="0.0.0.0", port=8080)
+    else:
+        logger.info("Starting in Stdio mode")
+        mcp.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
