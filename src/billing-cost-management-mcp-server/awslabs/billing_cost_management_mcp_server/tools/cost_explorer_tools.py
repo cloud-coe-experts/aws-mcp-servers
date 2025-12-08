@@ -30,7 +30,7 @@ from .cost_explorer_operations import (
 )
 from botocore.exceptions import ClientError
 from fastmcp import Context, FastMCP
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union, List
 
 
 cost_explorer_server = FastMCP(
@@ -136,7 +136,7 @@ async def cost_explorer(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     granularity: str = 'DAILY',
-    metrics: Optional[str] = None,
+    metrics: Union[str, List[str], None] = None,
     group_by: Optional[str] = None,
     filter: Optional[str] = None,
     dimension: Optional[str] = None,

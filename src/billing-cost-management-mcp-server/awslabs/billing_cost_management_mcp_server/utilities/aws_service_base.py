@@ -34,7 +34,7 @@ from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 from datetime import datetime, timedelta
 from fastmcp import Context
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 # Configure logger for this module
@@ -136,6 +136,29 @@ def create_aws_client(service_name: str, region_name: Optional[str] = None) -> A
 
     return session.client(service_name, config=config)
 
+def parse_metrics(metrics: Union[str, List[str], None]) -> List[str]:
+    """
+    Robustly handle metrics whether passed as a list, a JSON string, 
+    or a plain string.
+    """
+    if not metrics:
+        return ["UnblendedCost"]  # default metric
+
+    # CASE 1: The Agent sent a list directly (e.g., ["UnblendedCost"])
+    if isinstance(metrics, list):
+        return metrics
+
+    # CASE 2: The Agent sent a string (e.g., "['UnblendedCost']" or "UnblendedCost")
+    try:
+        # Try to parse as JSON (e.g., "[\"UnblendedCost\"]")
+        parsed = json.loads(metrics)
+        if isinstance(parsed, list):
+            return parsed
+        # If valid JSON but not a list (edge case), wrap it
+        return [str(parsed)]
+    except json.JSONDecodeError:
+        # Plain string (e.g., "UnblendedCost"), wrap in list
+        return [metrics]
 
 def parse_json(json_str: Optional[str], parameter_name: str) -> Any:
     """Parse a JSON string into a Python object.
