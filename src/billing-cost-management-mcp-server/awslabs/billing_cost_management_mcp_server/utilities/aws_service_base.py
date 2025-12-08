@@ -34,7 +34,7 @@ from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 from datetime import datetime, timedelta
 from fastmcp import Context
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 # Configure logger for this module
@@ -136,25 +136,28 @@ def create_aws_client(service_name: str, region_name: Optional[str] = None) -> A
 
     return session.client(service_name, config=config)
 
-def parse_metrics(metrics: Optional[str]) -> Any:
+def parse_metrics(metrics: Union[str, List[str], None]) -> List[str]:
     """
-    Ensure the metrics parameter is always a Python list of strings
-    suitable for AWS Cost Explorer get_cost_and_usage API.
-
-    Args:
-        metrics: Can be None, a plain string ("UnblendedCost"), 
-                 or a JSON-encoded list ("[\"UnblendedCost\"]").
-
-    Returns:
-        List of metric strings.
+    Robustly handle metrics whether passed as a list, a JSON string, 
+    or a plain string.
     """
     if not metrics:
         return ["UnblendedCost"]  # default metric
 
+    # CASE 1: The Agent sent a list directly (e.g., ["UnblendedCost"])
+    if isinstance(metrics, list):
+        return metrics
+
+    # CASE 2: The Agent sent a string (e.g., "['UnblendedCost']" or "UnblendedCost")
     try:
-        return json.loads(metrics)
+        # Try to parse as JSON (e.g., "[\"UnblendedCost\"]")
+        parsed = json.loads(metrics)
+        if isinstance(parsed, list):
+            return parsed
+        # If valid JSON but not a list (edge case), wrap it
+        return [str(parsed)]
     except json.JSONDecodeError:
-        # Plain string, wrap in list
+        # Plain string (e.g., "UnblendedCost"), wrap in list
         return [metrics]
 
 def parse_json(json_str: Optional[str], parameter_name: str) -> Any:
